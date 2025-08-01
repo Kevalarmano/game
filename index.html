@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>For My Dhiya 💖</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: "Comic Sans MS", cursive;
+    }
+
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .bg {
+      background: linear-gradient(270deg, #ffdde1, #ee9ca7, #fcbad3, #ff9a9e);
+      background-size: 800% 800%;
+      animation: gradientBG 10s ease infinite;
+      height: 100vh;
+      width: 100%;
+    }
+
+    #loadingScreen {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+
+    #loadingScreen h1 {
+      font-size: 36px;
+      text-shadow: 2px 2px 10px #ff4b5c;
+    }
+
+    #loadingScreen p {
+      font-size: 20px;
+      max-width: 500px;
+    }
+
+    #startBtn {
+      margin-top: 20px;
+      padding: 12px 24px;
+      background: #ff4b5c;
+      color: white;
+      border: none;
+      font-size: 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    #startBtn:hover {
+      background: #d43f50;
+      transform: scale(1.05);
+    }
+
+    h1 {
+      position: absolute;
+      top: 10px;
+      width: 100%;
+      text-align: center;
+      font-size: 34px;
+      color: white;
+      text-shadow: 2px 2px 10px #ff4b5c;
+    }
+
+    #gameCanvas {
+      display: none;
+      margin: 70px auto 0;
+      background: rgba(255, 255, 255, 0.2);
+      border: 4px solid white;
+      border-radius: 12px;
+    }
+
+    #finalScreen {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(255, 182, 193, 0.95);
+      color: white;
+      text-align: center;
+      animation: fadeIn 1s ease-in;
+      z-index: 10;
+      padding-top: 150px;
+    }
+
+    #finalScreen h2 {
+      font-size: 40px;
+      animation: glow 1.5s infinite alternate;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    @keyframes glow {
+      from { text-shadow: 0 0 10px #fff, 0 0 20px #ff4b5c; }
+      to { text-shadow: 0 0 20px #ff4b5c, 0 0 40px #fff; }
+    }
+  </style>
+</head>
+<body class="bg">
+  <div id="loadingScreen">
+    <h1>💖 Happy National Girlfriend Day, Dhiya 💖</h1>
+    <p>
+      This game was coded by your boyfriend <b>Keval Armano</b> 💕 who loves you more than anything!  
+      <br><br>
+      🎮 <b>Instructions:</b>  
+      ➡️ Move left/right with arrow keys (or touch on mobile).  
+      💖 Catch as many hearts as possible!  
+      💛 Golden hearts give extra points!  
+      ❤️ You now have <b>50 lives</b>, so enjoy!  
+    </p>
+    <button id="startBtn">Start Game 💕</button>
+  </div>
+
+  <h1 id="gameTitle" style="display:none;">💖 Catch My Love, Dhiya 💖</h1>
+  <canvas id="gameCanvas" width="420" height="550"></canvas>
+
+  <div id="finalScreen">
+    <h2>💍 Dhiya, You Caught All My Love 💌</h2>
+    <p>You are my world, my everything 💕</p>
+    <p>I will always love you forever 💖</p>
+    <p>Happy National Girlfriend Day, my love! 💘</p>
+    <h3>💖💍💌💖</h3>
+  </div>
+
+  <audio id="catchSound" src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_3f4f9c4ef7.mp3?filename=coin-collect-1-199573.mp3"></audio>
+  <audio id="missSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_1c28a33b5e.mp3?filename=negative_beeps-6008.mp3"></audio>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const catchSound = document.getElementById("catchSound");
+    const missSound = document.getElementById("missSound");
+
+    let basket = { x: 180, y: 500, width: 70, height: 30 };
+    let hearts = [];
+    let score = 0;
+    let lives = 50; // 50 lives
+    let speedIncrease = 0;
+    let gameOver = false;
+
+    function drawBasket() {
+      ctx.fillStyle = "#ff4b5c";
+      ctx.fillRect(basket.x, basket.y, basket.width, basket.height);
+    }
+
+    function drawHeart(x, y, isGolden = false) {
+      ctx.font = "26px Arial";
+      ctx.fillText(isGolden ? "💛" : "💖", x, y);
+    }
+
+    function createHeart() {
+      const x = Math.random() * (canvas.width - 30) + 10;
+      const isGolden = Math.random() < 0.15;
+      hearts.push({ x: x, y: 0, speed: 2 + Math.random() * 2 + speedIncrease, golden: isGolden });
+    }
+
+    function moveHearts() {
+      hearts.forEach((heart, index) => {
+        heart.y += heart.speed;
+
+        if (
+          heart.y + 15 > basket.y &&
+          heart.x > basket.x &&
+          heart.x < basket.x + basket.width
+        ) {
+          hearts.splice(index, 1);
+          score += heart.golden ? 3 : 1;
+          catchSound.play();
+          if (score % 5 === 0) speedIncrease += 0.3;
+        }
+
+        if (heart.y > canvas.height) {
+          hearts.splice(index, 1);
+          lives--;
+          missSound.play();
+        }
+      });
+    }
+
+    function drawHearts() {
+      hearts.forEach((heart) => drawHeart(heart.x, heart.y, heart.golden));
+    }
+
+    function drawHUD() {
+      ctx.fillStyle = "#fff";
+      ctx.font = "18px Arial";
+      ctx.fillText("Score: " + score, 10, 25);
+      ctx.fillText("Lives: " + lives, 320, 25);
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft" && basket.x > 0) basket.x -= 20;
+      if (e.key === "ArrowRight" && basket.x < canvas.width - basket.width) basket.x += 20;
+    });
+
+    canvas.addEventListener("touchstart", (e) => {
+      const touchX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
+      basket.x = touchX - basket.width / 2;
+    });
+
+    function updateGame() {
+      if (gameOver) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBasket();
+      moveHearts();
+      drawHearts();
+      drawHUD();
+
+      if (Math.random() < 0.05) createHeart();
+
+      if (score >= 40) { // Winning score changed to 40
+        document.getElementById("finalScreen").style.display = "block";
+        gameOver = true;
+      } else if (lives <= 0) {
+        alert("Oh no! You missed too many hearts 😢 Try again!");
+        window.location.reload();
+      } else {
+        requestAnimationFrame(updateGame);
+      }
+    }
+
+    document.getElementById("startBtn").addEventListener("click", () => {
+      document.getElementById("loadingScreen").style.display = "none";
+      document.getElementById("gameCanvas").style.display = "block";
+      document.getElementById("gameTitle").style.display = "block";
+      updateGame();
+    });
+  </script>
+</body>
+</html>
